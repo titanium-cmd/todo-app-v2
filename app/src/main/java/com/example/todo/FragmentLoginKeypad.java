@@ -7,6 +7,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,8 +25,10 @@ public class FragmentLoginKeypad extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         final View view = inflater.inflate(R.layout.fragment_login_keypad, container, false);
+
         Button btnOne, btnTwo, btnThree, btnFour, btnFive, btnSix, btnSeven, btnEight, btnNine, btnHash, btnStar, btnZero, sendBtn;
         TextView createAccountText = view.findViewById(R.id.newAccountText);
+        sendBtn = view.findViewById(R.id.sendBtn);
         errorMessage = view.findViewById(R.id.errorMessageCard);
         successMessage = view.findViewById(R.id.successMessageCard);
         hideMessage(errorMessage);
@@ -121,7 +124,13 @@ public class FragmentLoginKeypad extends Fragment {
             }
         });
 
-        sendBtn = view.findViewById(R.id.sendBtn);
+        createAccountText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                FragmentTransaction transaction = getActivity().getSupportFragmentManager().beginTransaction();
+                transaction.replace(R.id.loginFrame, new FragmentRegisterUser(), null).addToBackStack(null).commit();
+            }
+        });
         sendBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
