@@ -9,8 +9,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.BottomSheetDialogFragment;
 import android.support.design.widget.TextInputLayout;
+import android.support.v7.widget.CardView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,21 +25,20 @@ import android.widget.TimePicker;
 import android.widget.Toast;
 
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
+import java.util.Date;
 
 public class BottomSheetDialog extends BottomSheetDialogFragment implements DatePickerDialog.OnDateSetListener{
     private BottomSheetListener mListener;
     private ListView todoList;
     private TextView nullText;
     private String title, description;
-    private DatabaseManager databaseManager;
     private TextInputLayout descText;
     private Button addTodoBtn;
-    private int hours, minutes;
     private int day, month, year;
     private View view;
-    private static final String TODO_TITLE = "task title";
-    private static final String TODO_DESC = "task description";
     private EditText dateTimeEditText;
     private String dateSet;
 
@@ -45,24 +46,41 @@ public class BottomSheetDialog extends BottomSheetDialogFragment implements Date
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.bottom_sheet_layout, container, false);
+        final FirebaseOperations operations = new FirebaseOperations(getContext(), getActivity().getSupportFragmentManager());
+        final Button advanceOptionsBtn = view.findViewById(R.id.advancedOptionsBtn);
+        TextInputLayout pickDateTextInput = view.findViewById(R.id.dateTimeText);
+        final CardView advanceOptionsCard = view.findViewById(R.id.advanceOptionsCard);
         descText = view.findViewById(R.id.descriptionText);
         addTodoBtn = view.findViewById(R.id.addTodoBtn);
-        
-        databaseManager = new DatabaseManager(getContext());
 
         addTodoBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                Calendar calendar = Calendar.getInstance();
+                String currentDate = dateFormat.format(calendar.getTime());
                 title = getTitleText().getEditText().getText().toString();
                 description = descText.getEditText().getText().toString();
-                mListener.onTodoAdded(title, description);
-                TodoAdapter adapter = new TodoAdapter(getContext(), databaseManager.getTodoDetails(), getTodoList(), getNullText());
-                getTodoList().setAdapter(adapter);
+                mListener.onTodoAdded(title, description, dateTimeEditText.getText().toString(), currentDate, "unaccomplished");
+//                TodoAdapter adapter = new TodoAdapter(getContext(), operations.getTodoList(), getTodoList(), getNullText());
+//                getTodoList().setAdapter(adapter);
                 dismiss();
             }
         });
 
-        TextInputLayout pickDateTextInput = view.findViewById(R.id.dateTimeText);
+        advanceOptionsBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (advanceOptionsBtn.getText().equals("Show Options")){
+                    advanceOptionsBtn.setText("Hide Options");
+                    advanceOptionsCard.setVisibility(View.VISIBLE);
+                }else{
+                    advanceOptionsBtn.setText("Show Options");
+                    advanceOptionsCard.setVisibility(View.GONE);
+                }
+            }
+        });
+
         dateTimeEditText = pickDateTextInput.getEditText();
         dateTimeEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
@@ -86,7 +104,7 @@ public class BottomSheetDialog extends BottomSheetDialogFragment implements Date
     }
 
     public interface BottomSheetListener{
-        void onTodoAdded(String title, String desc);
+        void onTodoAdded(String title, String desc, String timeToAccomplish, String currentTime, String isAccomplished);
     }
 
     @Override
@@ -122,8 +140,6 @@ public class BottomSheetDialog extends BottomSheetDialogFragment implements Date
             @Override
             public void onTimeSet(TimePicker timePicker, int i, int i1) {
                 String time = timePicker.getCurrentHour() +":"+ timePicker.getCurrentMinute();
-                dateSet.concat(time);
-                Toast.makeText(getContext(), dateSet, Toast.LENGTH_LONG).show();
                 dateTimeEditText.setText(dateSet+"\n"+time);
             }
         }, hour, minute, true);
@@ -146,7 +162,6 @@ public class BottomSheetDialog extends BottomSheetDialogFragment implements Date
                 cancelAlert.create().dismiss();
             }
         });
-
         cancelAlert.create().show();
     }
 }

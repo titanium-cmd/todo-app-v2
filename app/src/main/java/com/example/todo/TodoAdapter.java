@@ -66,8 +66,8 @@ public class TodoAdapter extends ArrayAdapter<TodoDetails>{
             task_id.setText(details.getTodoId());
             title.setText(details.getTodoTitle());
             desc.setText(details.getTodoDesc());
-            isAccomplished.setText(details.getAccomplished());
-            if(details.getAccomplished().equals("Unaccomplished")){
+            isAccomplished.setText(details.getIsAccomplished());
+            if(details.getIsAccomplished().equals("Unaccomplished")){
                 isAccomplished.setTextColor(Color.parseColor("#97610606"));
             }else{
                 isAccomplished.setTextColor(Color.parseColor("#C4055008"));
@@ -116,7 +116,7 @@ public class TodoAdapter extends ArrayAdapter<TodoDetails>{
                                     String title = titleInput.getEditText().getText().toString();
                                     String desc = descInput.getEditText().getText().toString();
 
-                                    TodoDetails todoDetails = new TodoDetails(details.getTodoId(), title, desc, details.getAccomplished());
+                                    TodoDetails todoDetails = new TodoDetails(details.getTodoId(), title, desc, details.getIsAccomplished());
                                     databaseManager.updateTodo(todoDetails);
                                     Snackbar.make(((AppCompatActivity) getContext()).findViewById(R.id.mainContainer), "Task edited successfully", Snackbar.LENGTH_SHORT).show();
                                     updateList();

@@ -11,13 +11,13 @@ import android.view.ViewGroup;
 import android.widget.Button;
 
 public class FragmentRegisterUser extends Fragment {
+    private TextInputLayout fullNameTextInput, userNameTextInput, emailTextInput, passcodeTextInput, confirmPasscodeTextInput;
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_register_user, container, false);
         final FirebaseOperations operations = new FirebaseOperations(getContext(), getActivity().getSupportFragmentManager());
 
-        final TextInputLayout fullNameTextInput, userNameTextInput, emailTextInput, passcodeTextInput, confirmPasscodeTextInput;
         fullNameTextInput = view.findViewById(R.id.fullnameTextInput);
         userNameTextInput = view.findViewById(R.id.usernameTextInput);
         emailTextInput = view.findViewById(R.id.emailTextInput);
@@ -33,9 +33,48 @@ public class FragmentRegisterUser extends Fragment {
                 String passcode = passcodeTextInput.getEditText().getText().toString();
                 String confirmPasscode = confirmPasscodeTextInput.getEditText().getText().toString();
 
-                operations.registerUserInfo(fullName, userName, email, passcode);
+                boolean isValid  = validateInputs(fullName, userName, email, passcode, confirmPasscode);
+                if (isValid){
+                    operations.registerUserInfo(fullName, userName, email, passcode);
+                }
             }
         });
         return view;
+    }
+
+    private void clearPrevErrors(){
+        fullNameTextInput.setError(null);
+        userNameTextInput.setError(null);
+        emailTextInput.setError(null);
+        passcodeTextInput.setError(null);
+        confirmPasscodeTextInput.setError(null);
+    }
+
+    private boolean validateInputs (String fullName, String userName, String email, String passcode, String confirmPasscode){
+        boolean isValid = false;
+        if (fullName.isEmpty()){
+            clearPrevErrors();
+            fullNameTextInput.setError("FullName required");
+        }else if (userName.isEmpty()){
+            clearPrevErrors();
+            userNameTextInput.setError("Username required");
+        }else if (email.isEmpty()){
+            clearPrevErrors();
+            emailTextInput.setError("Email required");
+        }else if (passcode.isEmpty()){
+            clearPrevErrors();
+            passcodeTextInput.setError("Passcode required");
+        }else if(confirmPasscode.isEmpty()){
+            clearPrevErrors();
+            confirmPasscodeTextInput.setError("Confirm Passcode");
+        }else if (!passcode.equals(confirmPasscode)){
+            clearPrevErrors();
+            passcodeTextInput.setError("Doesn't match");
+            confirmPasscodeTextInput.setError("Doesn't match");
+        }else {
+            clearPrevErrors();
+            isValid = true;
+        }
+        return isValid;
     }
 }
