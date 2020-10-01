@@ -46,7 +46,7 @@ public class BottomSheetDialog extends BottomSheetDialogFragment implements Date
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.bottom_sheet_layout, container, false);
-        final FirebaseOperations operations = new FirebaseOperations(getContext(), getActivity().getSupportFragmentManager());
+        final FirebaseOperations operations = new FirebaseOperations(getContext());
         final Button advanceOptionsBtn = view.findViewById(R.id.advancedOptionsBtn);
         TextInputLayout pickDateTextInput = view.findViewById(R.id.dateTimeText);
         final CardView advanceOptionsCard = view.findViewById(R.id.advanceOptionsCard);

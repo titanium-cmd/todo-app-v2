@@ -6,4 +6,6 @@
         android:title="Edit Task"/>
     <item android:id="@+id/accomplished_task"
         android:title="Task Accomplished"/>
+    <item android:id="@+id/share_task"
+        android:title="Share"/>
 </menu>

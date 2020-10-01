@@ -8,29 +8,28 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity implements BottomSheetDialog.BottomSheetListener {
-    private DatabaseManager databaseManager;
+public class MainActivity extends AppCompatActivity implements BottomSheetDialog.BottomSheetListener, TodoAdapter.OnTaskChangeListener {
     private ListView todoList;
     private FirebaseOperations operations;
+    private TextView noneAvailable;
+    private TextView taskSize;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        operations = new FirebaseOperations(this, getSupportFragmentManager());
-
-        databaseManager = new DatabaseManager(this);
         todoList = findViewById(R.id.todoList);
+        taskSize = findViewById(R.id.todoSizeText);
+        noneAvailable = findViewById(R.id.nullText);
+        operations = new FirebaseOperations(this, todoList, noneAvailable);
+        operations.loadTodoList();
 
-        final TextView noneAvailable = findViewById(R.id.nullText);
-        if(databaseManager.getTodoDetails().size() > 0){
+        if(operations.getTodoSize() > 0){
             noneAvailable.setVisibility(View.INVISIBLE);
         }else{
             noneAvailable.setVisibility(View.VISIBLE);
         }
 
-        TodoAdapter adapter = new TodoAdapter(this, databaseManager.getTodoDetails(), todoList, noneAvailable);
-        todoList.setAdapter(adapter);
         FloatingActionButton addTodoFab = findViewById(R.id.addTodoFAB);
         addTodoFab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -58,8 +57,7 @@ public class MainActivity extends AppCompatActivity implements BottomSheetDialog
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        databaseManager.close();
+    public void onTaskChange(int taskTotal) {
+        taskSize.setText("Tasks ("+taskTotal+")");
     }
 }

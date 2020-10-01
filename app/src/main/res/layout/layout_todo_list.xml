@@ -36,9 +36,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
                 android:tint="#676767"
-                app:layout_constraintBottom_toBottomOf="@+id/textView4"
-                app:layout_constraintEnd_toStartOf="@+id/textView4"
-                app:layout_constraintTop_toTopOf="@+id/textView4"
+                app:layout_constraintBottom_toBottomOf="@+id/currentTimeText"
+                app:layout_constraintEnd_toStartOf="@+id/currentTimeText"
+                app:layout_constraintTop_toTopOf="@+id/currentTimeText"
                 app:srcCompat="@drawable/ic_access_time_black_24dp" />
 
             <TextView
@@ -101,12 +101,12 @@
                 android:layout_marginStart="8dp"
                 android:text="Created By: YOU"
                 android:textColor="@color/colorView"
-                app:layout_constraintBottom_toBottomOf="@+id/textView4"
+                app:layout_constraintBottom_toBottomOf="@+id/currentTimeText"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/textView4" />
+                app:layout_constraintTop_toTopOf="@+id/currentTimeText" />
 
             <TextView
-                android:id="@+id/textView4"
+                android:id="@+id/currentTimeText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="TextView"
