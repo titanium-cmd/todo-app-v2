@@ -29,6 +29,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -122,6 +123,44 @@ public class FirebaseOperations {
         return isTaskAdded;
     }
 
+    public void deleteTodoItem(final String id){
+        mTodoListRef.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                if (firebaseUser != null){
+                    TodoDetails todo = dataSnapshot.getValue(TodoDetails.class);
+                    if(todo != null){
+                        if (todo.getTodoId().equals(id)){
+                            mTodoListRef.child(dataSnapshot.getKey()).removeValue();
+                            getContext.startActivity(new Intent(getContext, MainActivity.class));
+                        }
+                    }
+
+                }
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+    }
+
     public void loadTodoList(){
         if (firebaseUser != null){
             mTodoListRef.addChildEventListener(new ChildEventListener() {
@@ -131,7 +170,6 @@ public class FirebaseOperations {
                     todoAdapter.add(todo);
                     todoAdapter.notifyDataSetChanged();
                     numOfTodos = todoAdapter.getCount();
-                    Log.v("todo", todo.getCurrentTime());
                     todoList.setAdapter(todoAdapter);
                 }
 

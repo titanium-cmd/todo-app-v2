@@ -8,6 +8,8 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.util.UUID;
+
 public class MainActivity extends AppCompatActivity implements BottomSheetDialog.BottomSheetListener, TodoAdapter.OnTaskChangeListener {
     private ListView todoList;
     private FirebaseOperations operations;
@@ -44,7 +46,9 @@ public class MainActivity extends AppCompatActivity implements BottomSheetDialog
 
     @Override
     public void onTodoAdded(String title, String desc, String timeToAccomplish, String currentTime, String isAccomplished) {
+        UUID uuid = UUID.randomUUID();
         TodoDetails todoDetails = new TodoDetails();
+        todoDetails.setTodoId(uuid.toString());
         todoDetails.setTodoDesc(desc);
         todoDetails.setIsAccomplished(isAccomplished);
         todoDetails.setTodoTitle(title);

@@ -88,7 +88,7 @@ public class TodoAdapter extends ArrayAdapter<TodoDetails>{
                 public boolean onMenuItemClick(MenuItem item) {
                     switch (item.getItemId()){
                         case R.id.delete_task:
-//                            databaseManager.deleteTodo(details.getTodoId());
+                            operations.deleteTodoItem(details.getTodoId());
                             updateList();
                             checkTaskAvailability();
                             Snackbar.make(((AppCompatActivity) getContext()).findViewById(R.id.mainContainer), "Task deleted successfully", Snackbar.LENGTH_SHORT).show();
