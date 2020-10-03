@@ -5,11 +5,13 @@ public class TodoDetails {
 
     TodoDetails(){}
 
-    public TodoDetails(String todoId, String todoTitle, String todoDesc, String isAccomplished) {
+    public TodoDetails(String todoId, String todoTitle, String todoDesc, String isAccomplished, String timeToAccomplish, String currentTime) {
         this.todoId = todoId;
         this.todoTitle = todoTitle;
         this.todoDesc = todoDesc;
         this.isAccomplished = isAccomplished;
+        this.timeToAccomplish = timeToAccomplish;
+        this.currentTime = currentTime;
     }
 
     public String getIsAccomplished() { return isAccomplished; }

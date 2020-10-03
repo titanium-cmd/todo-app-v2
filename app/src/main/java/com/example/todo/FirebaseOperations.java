@@ -8,17 +8,12 @@ import android.content.Intent;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.design.widget.Snackbar;
 import android.support.design.widget.TextInputLayout;
-import android.support.v4.app.FragmentManager;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -29,7 +24,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -40,20 +34,19 @@ public class FirebaseOperations {
     private FirebaseUser firebaseUser;
     private Context getContext;
     private ProgressDialog progressDialog;
-    private TodoAdapter todoAdapter;
-    private FragmentManager fm;
     private User user;
-    private TodoDetails todoDetails;
-    private boolean isTaskAdded;
     private static int numOfTodos = 0;
     private ArrayList<TodoDetails> todoDetail;
     private ListView todoList;
     private TextView noneAvailable;
+    private TodoAdapter todoAdapter;
+    private TodoDetails todo;
 
     public FirebaseOperations(Context context){
         this.getContext = context;
         this.mAuth = FirebaseAuth.getInstance();
         firebaseUser = mAuth.getCurrentUser();
+        todoAdapter = new TodoAdapter(getContext, todoDetail, todoList, noneAvailable);
         mUserInfoRef = FirebaseDatabase.getInstance().getReference("users").child(mAuth.getUid());
         mTodoListRef = FirebaseDatabase.getInstance().getReference("todos").child(mAuth.getUid());
         user = new User();
@@ -65,7 +58,6 @@ public class FirebaseOperations {
         noneAvailable = _noneAvailable;
         todoDetail = new ArrayList<>();
         todoAdapter = new TodoAdapter(getContext, todoDetail, todoList, noneAvailable);
-        todoList.setAdapter(todoAdapter);
         this.mAuth = FirebaseAuth.getInstance();
         firebaseUser = mAuth.getCurrentUser();
         mUserInfoRef = FirebaseDatabase.getInstance().getReference("users").child(mAuth.getUid());
@@ -110,55 +102,16 @@ public class FirebaseOperations {
         });
     }
 
-    public boolean addTodoItem(TodoDetails todoDetails){
-        isTaskAdded = false;
-        mTodoListRef.push().setValue(todoDetails).addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                if (task.isSuccessful()){
-                    isTaskAdded = true;
-                }
-            }
-        });
-        return isTaskAdded;
+    public void addTodoItem(TodoDetails todoDetails){
+        mTodoListRef.child(todoDetails.getTodoId()).setValue(todoDetails);
     }
 
-    public void deleteTodoItem(final String id){
-        mTodoListRef.addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                if (firebaseUser != null){
-                    TodoDetails todo = dataSnapshot.getValue(TodoDetails.class);
-                    if(todo != null){
-                        if (todo.getTodoId().equals(id)){
-                            mTodoListRef.child(dataSnapshot.getKey()).removeValue();
-                            getContext.startActivity(new Intent(getContext, MainActivity.class));
-                        }
-                    }
+    public void deleteTodoItem(String id){
+        mTodoListRef.child(id).removeValue();
+    }
 
-                }
-            }
-
-            @Override
-            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
-            }
-
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-
-            }
-
-            @Override
-            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
+    public DatabaseReference getTodoRef(){
+        return mTodoListRef;
     }
 
     public void loadTodoList(){
@@ -166,21 +119,41 @@ public class FirebaseOperations {
             mTodoListRef.addChildEventListener(new ChildEventListener() {
                 @Override
                 public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                    TodoDetails todo = dataSnapshot.getValue(TodoDetails.class);
+                    todo = dataSnapshot.getValue(TodoDetails.class);
                     todoAdapter.add(todo);
-                    todoAdapter.notifyDataSetChanged();
-                    numOfTodos = todoAdapter.getCount();
+                    numOfTodos = todoDetail.size();
                     todoList.setAdapter(todoAdapter);
+                    todoAdapter.notifyDataSetChanged();
                 }
 
                 @Override
                 public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
+                    for (int i = 0; i < todoDetail.size(); i++) {
+                        if (todoDetail.get(i).getTodoId().equals(dataSnapshot.getValue(TodoDetails.class).getTodoId())) {
+                            todoDetail.remove(i);
+                            todoDetail.add(i, dataSnapshot.getValue(TodoDetails.class));
+                            break;
+                        }
+                    }
+                    numOfTodos = todoDetail.size();
+                    Log.v("onTask (ops)", getTodoSize()+"");
+                    todoAdapter = new TodoAdapter(getContext, todoDetail, todoList, noneAvailable);
+                    todoList.setAdapter(todoAdapter);
+                    todoAdapter.notifyDataSetChanged();
                 }
 
                 @Override
                 public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-
+                    for (int i = 0; i < todoDetail.size(); i++) {
+                        if (todoDetail.get(i).getTodoId().equals(dataSnapshot.getValue(TodoDetails.class).getTodoId())) {
+                            todoDetail.remove(i);
+                            break;
+                        }
+                    }
+                    numOfTodos = todoDetail.size();
+                    todoAdapter = new TodoAdapter(getContext, todoDetail, todoList, noneAvailable);
+                    todoList.setAdapter(todoAdapter);
+                    todoAdapter.notifyDataSetChanged();
                 }
 
                 @Override
@@ -199,6 +172,7 @@ public class FirebaseOperations {
     public int getTodoSize (){
         return numOfTodos;
     }
+
 
     public void loginUser(TextInputLayout emailText, String email, TextInputLayout passwordText, String password){
         progressBar("Checking...", "Checking credentials. Please wait...");

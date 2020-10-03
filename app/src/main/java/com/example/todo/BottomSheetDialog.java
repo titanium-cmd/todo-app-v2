@@ -62,8 +62,6 @@ public class BottomSheetDialog extends BottomSheetDialogFragment implements Date
                 title = getTitleText().getEditText().getText().toString();
                 description = descText.getEditText().getText().toString();
                 mListener.onTodoAdded(title, description, dateTimeEditText.getText().toString(), currentDate, "unaccomplished");
-//                TodoAdapter adapter = new TodoAdapter(getContext(), operations.getTodoList(), getTodoList(), getNullText());
-//                getTodoList().setAdapter(adapter);
                 dismiss();
             }
         });

@@ -9,6 +9,7 @@ import android.support.design.widget.BottomSheetDialog;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -22,11 +23,17 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import java.util.ArrayList;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.List;
-import java.util.Map;
 
 
 public class TodoAdapter extends ArrayAdapter<TodoDetails>{
@@ -34,6 +41,8 @@ public class TodoAdapter extends ArrayAdapter<TodoDetails>{
     private TextView nullText;
     private OnTaskChangeListener taskChangeListener;
     private FirebaseOperations operations;
+    private TextInputLayout descInput, titleInput, timeToAccomplish;
+    private Button updateBtn;
 
     public interface OnTaskChangeListener {
         void onTaskChange(int taskTotal);
@@ -52,12 +61,12 @@ public class TodoAdapter extends ArrayAdapter<TodoDetails>{
         convertView = LayoutInflater.from(getContext()).inflate(R.layout.layout_todo_list, parent, false);
         final TodoDetails details = getItem(position);
         attachTaskInterface();
-        operations = new FirebaseOperations(getContext());
+        operations = new FirebaseOperations(getContext(), todoList, nullText);
         checkTaskAvailability();
 
         TextView task_id = convertView.findViewById(R.id.task_no);
         final TextView title = convertView.findViewById(R.id.title);
-        TextView desc = convertView.findViewById(R.id.description);
+        final TextView desc = convertView.findViewById(R.id.description);
         TextView timeAdded = convertView.findViewById(R.id.currentTimeText);
         ImageView popupIcon = convertView.findViewById(R.id.popupMenu);
         //popupIcon.setFocusable(true);
@@ -65,7 +74,8 @@ public class TodoAdapter extends ArrayAdapter<TodoDetails>{
         TextView isAccomplished = convertView.findViewById(R.id.accomplished);
 
         if (details != null) {
-            taskChangeListener.onTaskChange(operations.getTodoSize());
+            taskChangeListener.onTaskChange(getCount());
+            Log.v("onTask (adapter)", getCount()+"");
             timeAdded.setText(details.getCurrentTime());
             task_id.setText(details.getTodoId());
             title.setText(details.getTodoTitle());
@@ -81,49 +91,69 @@ public class TodoAdapter extends ArrayAdapter<TodoDetails>{
             popupMenu.getMenuInflater().inflate(R.menu.popup_menu, popupMenu.getMenu());
             popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
 
-                private TextInputLayout descInput;
-                private TextInputLayout titleInput;
-
                 @Override
                 public boolean onMenuItemClick(MenuItem item) {
                     switch (item.getItemId()){
                         case R.id.delete_task:
                             operations.deleteTodoItem(details.getTodoId());
-                            updateList();
                             checkTaskAvailability();
                             Snackbar.make(((AppCompatActivity) getContext()).findViewById(R.id.mainContainer), "Task deleted successfully", Snackbar.LENGTH_SHORT).show();
                             break;
                         case R.id.edit_task:
                             View view = ((FragmentActivity)getContext()).getLayoutInflater().inflate(R.layout.bottom_sheet_layout, null);
-                            final BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(getContext());
+                            final BottomSheetDialog bottomSheetDialog;
+                            bottomSheetDialog = new BottomSheetDialog(getContext());
                             bottomSheetDialog.setContentView(view);
+                            bottomSheetDialog.show();
 
                             titleInput = bottomSheetDialog.getWindow().findViewById(R.id.titleText);
                             descInput = bottomSheetDialog.getWindow().findViewById(R.id.descriptionText);
-                            Button updateBtn = bottomSheetDialog.getWindow().findViewById(R.id.addTodoBtn);
-                            updateBtn.setText("Update task");
-                            TextView dialogTitle = bottomSheetDialog.findViewById(R.id.sheetTitle);
-                            dialogTitle.setText("UPDATE TODO ITEM");
-                            bottomSheetDialog.show();
-
-                            updateBtn.setOnClickListener(new View.OnClickListener() {
+                            timeToAccomplish = bottomSheetDialog.getWindow().findViewById(R.id.dateTimeText);
+                            operations.getTodoRef().child(details.getTodoId()).addValueEventListener(new ValueEventListener() {
                                 @Override
-                                public void onClick(View v) {
-                                    String title = titleInput.getEditText().getText().toString();
-                                    String desc = descInput.getEditText().getText().toString();
+                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                    TodoDetails todoDetails = dataSnapshot.getValue(TodoDetails.class);
+                                    if (todoDetails != null){
+                                        titleInput.getEditText().setText(todoDetails.getTodoTitle());
+                                        descInput.getEditText().setText(todoDetails.getTodoDesc());
+                                        timeToAccomplish.getEditText().setText(todoDetails.getTimeToAccomplish());
 
-                                    Snackbar.make(((AppCompatActivity) getContext()).findViewById(R.id.mainContainer), "Task edited successfully", Snackbar.LENGTH_SHORT).show();
-                                    updateList();
-                                    bottomSheetDialog.dismiss();
+                                        updateBtn = bottomSheetDialog.getWindow().findViewById(R.id.addTodoBtn);
+                                        updateBtn.setText("Update task");
+                                        TextView dialogTitle = bottomSheetDialog.findViewById(R.id.sheetTitle);
+                                        dialogTitle.setText("UPDATE TODO ITEM");
+
+                                        updateBtn.setOnClickListener(new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View v) {
+                                                String title = titleInput.getEditText().getText().toString();
+                                                String desc = descInput.getEditText().getText().toString();
+                                                String dateTime = timeToAccomplish.getEditText().getText().toString();
+
+                                                TodoDetails todo = new TodoDetails(details.getTodoId(), title, desc, details.getIsAccomplished(), dateTime, getCurrentDate());
+                                                operations.getTodoRef().child(details.getTodoId()).setValue(todo);
+                                                bottomSheetDialog.dismiss();
+                                                Snackbar.make(((AppCompatActivity) getContext()).findViewById(R.id.mainContainer), "Task edited successfully", Snackbar.LENGTH_SHORT).show();
+                                            }
+                                        });
+                                    }
+                                }
+
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError databaseError) {
+
                                 }
                             });
                             break;
                         case R.id.accomplished_task:
-                            TodoDetails todoDetails = new TodoDetails(details.getTodoId(), details.getTodoTitle(), details.getTodoDesc(), "Accomplished");
+                            TodoDetails todoDetails = new TodoDetails(details.getTodoId(), details.getTodoTitle(), details.getTodoDesc(), "accomplished", details.getTimeToAccomplish(), getCurrentDate());
+                            operations.getTodoRef().child(details.getTodoId()).setValue(todoDetails);
                             Menu menu = popupMenu.getMenu();
                             menu.removeItem(R.id.accomplished_task);
                             Snackbar.make(((AppCompatActivity) getContext()).findViewById(R.id.mainContainer), "Task edited successfully", Snackbar.LENGTH_SHORT).show();
-                            updateList();
+                            break;
+                        case R.id.share_task:
+
                             break;
                     }
                     return true;
@@ -140,18 +170,18 @@ public class TodoAdapter extends ArrayAdapter<TodoDetails>{
         return convertView;
     }
 
+    private String getCurrentDate() {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        Calendar calendar = Calendar.getInstance();
+        return dateFormat.format(calendar.getTime());
+    }
+
     private void checkTaskAvailability() {
-        if(operations.getTodoSize() > 0){
+        if(getCount() > 0){
             nullText.setVisibility(View.INVISIBLE);
         }else{
             nullText.setVisibility(View.VISIBLE);
         }
-    }
-
-    private void updateList(){
-        notifyDataSetChanged();
-//        TodoAdapter adapter = new TodoAdapter(getContext(), databaseManager.getTodoDetails(), todoList, nullText);
-//        todoList.setAdapter(adapter);
     }
 
     private void attachTaskInterface(){
